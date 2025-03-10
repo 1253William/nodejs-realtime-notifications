@@ -1,26 +1,22 @@
-import express from 'express';
-import { createServer } from 'http';
-import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
-
+const express = require('express');
+const http = require('http');
+const { WebSocketServer } = require('ws');
+const dotenv = require('dotenv');
+const notificationRoutes = require('./routes/notification.route');
+const setupWebSocket = require('./controllers/websocket.controller');
 
 dotenv.config();
 
 const app = express();
-const server = createServer(app);
-const port = process.env.PORT || 3000;
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+app.set('wss', wss);
+setupWebSocket(wss); 
 
-// Initialize WebSocket Manager
-const webSocketManager = new WebSocketManager(server);
+app.use(express.json());
+app.use('/api/notifications', notificationRoutes);
 
-// Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// Routes
-app.use('/api', notificationRoutes(webSocketManager));
-
-// Start Server
-server.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
